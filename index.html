@@ -8,19 +8,19 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --wrb:        #005BAC;
-      --wrb-light:  #1a7fd4;
-      --wrb-dim:    #003d75;
-      --gold:       #C8A800;
-      --bg:         #080c10;
-      --surface:    #0d1520;
-      --surface2:   #111d2e;
-      --border:     #1a2e44;
-      --text:       #c8d8e8;
-      --text-dim:   #4a7aaa;
-      --text-muted: #3a5a7a;
-      --danger:     #e05555;
-      --danger-dim: #e07070;
+      --subaru:     #004890;   /* Subaru brand blue */
+      --wrx:        #053a88;   /* WRX blue */
+      --accent:     #4a9eff;   /* bright readable blue for highlights */
+      --gold:       #f0c040;   /* warm amber for warnings/status */
+      --bg:         #01102a;   /* deep navy */
+      --surface:    #02193f;   /* card background */
+      --surface2:   #032050;   /* inset / input background */
+      --border:     #0a3570;   /* subtle border */
+      --text:       #ffffff;   /* primary text — pure white */
+      --text-dim:   #a0bfe0;   /* secondary text */
+      --text-muted: #6890c0;   /* tertiary / placeholder */
+      --danger:     #ff5555;
+      --danger-dim: #ff7070;
       --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -36,48 +36,50 @@
     }
 
     .stripe {
-      height: 4px;
-      background: linear-gradient(90deg, var(--wrb) 0%, var(--wrb-light) 65%, var(--gold) 100%);
+      height: 5px;
+      background: linear-gradient(90deg, var(--wrx) 0%, var(--subaru) 50%, var(--accent) 100%);
       flex-shrink: 0;
     }
 
+    /* ── Header ── */
     header {
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 16px 20px 12px; display: flex;
+      background: var(--wrx); border-bottom: 1px solid var(--subaru);
+      padding: 18px 20px 14px; display: flex;
       align-items: center; justify-content: space-between; flex-shrink: 0;
     }
-    .header-sub   { font-size: 11px; letter-spacing: 3px; color: var(--wrb-dim); margin-bottom: 3px; text-transform: uppercase; }
-    .header-title { font-size: 22px; font-weight: 700; letter-spacing: 1px; color: #fff; }
-    .header-title span { color: var(--wrb-light); }
+    .header-sub   { font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.6); margin-bottom: 3px; text-transform: uppercase; }
+    .header-title { font-size: 26px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+    .header-title span { color: var(--accent); }
 
     #status-badge {
-      font-size: 11px; letter-spacing: 1.5px; font-weight: 600;
+      font-size: 13px; letter-spacing: 1px; font-weight: 700;
       opacity: 0; transition: opacity 0.3s; text-align: right; line-height: 1.5;
     }
     #status-badge.show  { opacity: 1; }
     #status-badge.ok    { color: var(--gold); }
     #status-badge.error { color: var(--danger); }
 
+    /* ── Nav ── */
     nav {
-      background: var(--surface); border-bottom: 1px solid var(--border);
+      background: var(--subaru); border-bottom: 2px solid var(--wrx);
       display: flex; flex-shrink: 0;
     }
     nav button {
-      flex: 1; background: transparent; color: var(--text-dim); border: none;
-      border-top: 3px solid transparent; padding: 14px 4px 12px;
-      font-size: 11px; letter-spacing: 1.5px; font-weight: 400;
+      flex: 1; background: transparent; color: rgba(255,255,255,0.6); border: none;
+      border-bottom: 3px solid transparent; padding: 15px 4px 13px;
+      font-size: 13px; letter-spacing: 1px; font-weight: 500;
       cursor: pointer; font-family: var(--font); text-transform: uppercase;
-      min-height: 52px; transition: color 0.15s, border-color 0.15s, background 0.15s;
+      min-height: 54px; transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
     nav button.active {
-      background: var(--wrb); color: #fff;
-      border-top-color: var(--wrb-light); font-weight: 700;
+      background: rgba(255,255,255,0.12); color: #fff;
+      border-bottom-color: var(--accent); font-weight: 700;
     }
 
     .view { display: none; padding: 16px; flex: 1; }
     .view.active { display: block; }
 
-    /* Loading overlay */
+    /* ── Loading overlay ── */
     #loading-overlay {
       position: fixed; inset: 0; background: var(--bg);
       display: flex; flex-direction: column;
@@ -85,141 +87,153 @@
     }
     #loading-overlay.hidden { display: none; }
     .spinner {
-      width: 36px; height: 36px; border: 3px solid var(--border);
-      border-top-color: var(--wrb-light); border-radius: 50%;
+      width: 40px; height: 40px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text  { font-size: 13px; color: var(--text-dim); letter-spacing: 2px; }
-    .error-icon    { font-size: 32px; }
+    .loading-text  { font-size: 15px; color: var(--text-dim); letter-spacing: 1px; }
+    .error-icon    { font-size: 36px; }
     .error-message {
-      font-size: 14px; color: var(--danger-dim); text-align: center;
+      font-size: 15px; color: var(--danger-dim); text-align: center;
       max-width: 300px; line-height: 1.7; white-space: pre-line;
     }
     .btn-retry {
-      background: var(--wrb); color: #fff; border: none;
-      padding: 12px 24px; font-size: 13px; font-family: var(--font);
-      border-radius: 4px; cursor: pointer; letter-spacing: 1px;
+      background: var(--subaru); color: #fff; border: none;
+      padding: 14px 28px; font-size: 15px; font-family: var(--font);
+      border-radius: 6px; cursor: pointer; font-weight: 600;
     }
 
-    /* Config banner */
+    /* ── Config banner ── */
     #config-banner {
       background: var(--surface2); border: 1px solid var(--gold);
-      border-left: 4px solid var(--gold); border-radius: 4px;
+      border-left: 4px solid var(--gold); border-radius: 6px;
       padding: 14px 16px; margin-bottom: 14px;
-      font-size: 13px; color: #8a9aaa; line-height: 1.7; display: none;
+      font-size: 14px; color: var(--text-dim); line-height: 1.7; display: none;
     }
-    #config-banner strong { color: var(--gold); display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+    #config-banner strong { color: var(--gold); display: block; margin-bottom: 4px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
+    /* ── Cards ── */
     .card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; padding: 16px; margin-bottom: 14px;
+      border-radius: 8px; padding: 18px; margin-bottom: 14px;
     }
-    .card.highlight { border-color: var(--wrb); border-left: 5px solid var(--wrb-light); }
+    .card.highlight { border-color: var(--accent); border-left: 5px solid var(--accent); }
 
     #mounted-banner { display: flex; justify-content: space-between; align-items: center; }
-    .mounted-icon { font-size: 30px; opacity: 0.35; }
+    .mounted-icon { font-size: 34px; opacity: 0.3; }
     .label-xs {
-      font-size: 11px; letter-spacing: 2px; color: var(--text-dim);
-      text-transform: uppercase; margin-bottom: 5px;
+      font-size: 12px; letter-spacing: 2px; color: var(--text-dim);
+      text-transform: uppercase; margin-bottom: 6px; font-weight: 600;
     }
 
-    #odo-card { display: flex; align-items: center; gap: 14px; }
-    #odo-card input { width: 150px; font-size: 22px; font-weight: 700; color: #fff; padding: 8px 12px; }
-    #odo-hint { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+    /* ── Odometer card ── */
+    #odo-card { display: flex; align-items: center; gap: 16px; }
+    #odo-card input { width: 160px; font-size: 24px; font-weight: 700; color: #fff; padding: 8px 12px; }
+    #odo-hint { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
 
+    /* ── Tire set cards ── */
     .tire-card {
-      background: var(--surface); border-radius: 4px; padding: 18px 16px;
+      background: var(--surface); border-radius: 8px; padding: 20px 18px;
       margin-bottom: 14px; position: relative; border: 1px solid var(--border);
     }
     .on-car-badge {
-      position: absolute; top: 12px; right: 12px; font-size: 11px;
-      letter-spacing: 1.5px; font-weight: 600; background: var(--surface2);
-      padding: 3px 8px; border-radius: 2px;
+      position: absolute; top: 14px; right: 14px; font-size: 12px;
+      letter-spacing: 1.5px; font-weight: 700; background: var(--subaru);
+      color: #fff; padding: 4px 10px; border-radius: 4px;
     }
-    .tire-set-label { font-size: 11px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
-    .tire-set-name  { font-size: 13px; color: #5a7a9a; margin-bottom: 16px; }
-    .miles-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
-    .miles-big { font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -1px; }
-    .miles-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
-    .pct-big   { font-size: 30px; font-weight: 700; line-height: 1; text-align: right; }
-    .pct-sub   { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; text-align: right; }
-    .progress-track { background: #0a1520; height: 5px; border-radius: 2px; margin-bottom: 10px; }
-    .progress-bar   { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-    .tire-status    { font-size: 13px; line-height: 1.4; color: var(--text-muted); }
-    .tire-status.warn { color: var(--danger-dim); }
+    .tire-set-label { font-size: 12px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+    .tire-set-name  { font-size: 15px; color: var(--text-dim); margin-bottom: 18px; font-weight: 500; }
+    .miles-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+    .miles-big { font-size: 42px; font-weight: 700; line-height: 1; letter-spacing: -1px; color: #fff; }
+    .miles-sub { font-size: 12px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; }
+    .pct-big   { font-size: 32px; font-weight: 700; line-height: 1; text-align: right; }
+    .pct-sub   { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; text-align: right; }
+    .progress-track { background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-bottom: 12px; }
+    .progress-bar   { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .tire-status    { font-size: 14px; line-height: 1.5; color: var(--text-dim); }
+    .tire-status.warn { color: var(--danger-dim); font-weight: 600; }
 
+    /* ── Buttons ── */
     .btn-primary {
-      width: 100%; background: var(--wrb); color: #fff; border: none;
-      padding: 18px; font-size: 15px; font-weight: 700; letter-spacing: 2px;
+      width: 100%; background: var(--subaru); color: #fff; border: none;
+      padding: 18px; font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
       text-transform: uppercase; cursor: pointer; font-family: var(--font);
-      border-radius: 4px; min-height: 56px;
+      border-radius: 8px; min-height: 58px;
     }
-    .btn-primary:hover { background: var(--wrb-light); }
+    .btn-primary:hover { background: var(--accent); }
 
-    .form-section { margin-bottom: 18px; }
-    .form-label { font-size: 13px; color: #5a8ab0; margin-bottom: 7px; font-weight: 600; display: block; }
+    /* ── Form ── */
+    .form-section { margin-bottom: 20px; }
+    .form-label { font-size: 14px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; display: block; }
     input[type="date"], input[type="number"], textarea {
       background: var(--surface2); border: 1px solid var(--border);
-      color: #ddeeff; padding: 14px 16px; font-size: 17px;
+      color: #fff; padding: 15px 16px; font-size: 18px;
       font-family: var(--font); outline: none; width: 100%;
-      border-radius: 4px; -webkit-appearance: none;
+      border-radius: 6px; -webkit-appearance: none;
     }
-    input:focus, textarea:focus { border-color: var(--wrb-light); }
-    textarea { resize: vertical; min-height: 80px; font-size: 15px; }
+    input::placeholder { color: var(--text-muted); }
+    input:focus, textarea:focus { border-color: var(--accent); border-width: 2px; }
+    textarea { resize: vertical; min-height: 80px; font-size: 16px; }
 
-    .set-picker { display: flex; gap: 10px; }
+    /* ── Set picker ── */
+    .set-picker { display: flex; gap: 12px; }
     .set-btn {
-      flex: 1; padding: 16px 8px; background: var(--surface2); color: #5a8ab0;
+      flex: 1; padding: 18px 8px; background: var(--surface2); color: var(--text-dim);
       border: 2px solid var(--border); cursor: pointer; font-family: var(--font);
-      border-radius: 4px; line-height: 1.5; min-height: 72px; text-align: center;
+      border-radius: 8px; line-height: 1.5; min-height: 76px; text-align: center;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
-    .set-btn .set-short { font-size: 15px; font-weight: 700; display: block; }
-    .set-btn .set-long  { font-size: 11px; opacity: 0.85; margin-top: 3px; display: block; }
+    .set-btn .set-short { font-size: 17px; font-weight: 700; display: block; color: #fff; }
+    .set-btn .set-long  { font-size: 12px; opacity: 0.8; margin-top: 4px; display: block; }
 
-    .form-actions { display: flex; gap: 10px; }
+    /* ── Form actions ── */
+    .form-actions { display: flex; gap: 12px; }
     .btn-save {
-      flex: 2; background: var(--wrb); color: #fff; border: none;
-      padding: 18px; font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+      flex: 2; background: var(--subaru); color: #fff; border: none;
+      padding: 18px; font-size: 16px; font-weight: 700; letter-spacing: 1px;
       text-transform: uppercase; cursor: pointer; font-family: var(--font);
-      border-radius: 4px; min-height: 56px;
+      border-radius: 8px; min-height: 58px;
     }
-    .btn-save:disabled { background: #1a2a3a; color: #3a5a7a; cursor: not-allowed; }
+    .btn-save:hover  { background: var(--accent); }
+    .btn-save:disabled { background: var(--surface2); color: var(--text-muted); cursor: not-allowed; }
     .btn-cancel {
-      flex: 1; background: transparent; color: #5a8ab0; border: 1px solid var(--border);
-      padding: 18px; font-size: 15px; cursor: pointer; font-family: var(--font);
-      border-radius: 4px; min-height: 56px;
+      flex: 1; background: transparent; color: var(--text-dim);
+      border: 2px solid var(--border); padding: 18px; font-size: 16px;
+      cursor: pointer; font-family: var(--font); border-radius: 8px; min-height: 58px;
     }
+    .btn-cancel:hover { border-color: var(--text-dim); color: #fff; }
 
+    /* ── History ── */
     .swap-item {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; border-left-width: 4px; padding: 14px; margin-bottom: 10px;
+      border-radius: 8px; border-left-width: 5px; padding: 16px; margin-bottom: 12px;
     }
     .swap-top   { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-    .swap-set   { font-size: 15px; font-weight: 700; }
-    .swap-meta  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
-    .swap-notes { font-size: 13px; color: #4a6a7a; margin-top: 4px; }
+    .swap-set   { font-size: 16px; font-weight: 700; color: #fff; }
+    .swap-meta  { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+    .swap-notes { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
     .swap-miles { text-align: right; margin-left: 12px; flex-shrink: 0; }
-    .swap-miles-big { font-size: 22px; font-weight: 700; color: #6a9aca; line-height: 1; }
-    .swap-miles-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .swap-actions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px; }
+    .swap-miles-big { font-size: 24px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .swap-miles-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .swap-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
     .btn-remove {
       background: transparent; color: var(--text-muted); border: 1px solid var(--border);
-      padding: 8px 14px; font-size: 11px; cursor: pointer; font-family: var(--font);
-      border-radius: 4px; letter-spacing: 1px; min-height: 40px;
+      padding: 9px 16px; font-size: 13px; cursor: pointer; font-family: var(--font);
+      border-radius: 6px; letter-spacing: 1px; min-height: 42px;
     }
+    .btn-remove:hover { border-color: var(--danger); color: var(--danger); }
     .btn-confirm-del {
-      background: #801010; color: #fff; border: none; padding: 10px 18px;
-      font-size: 13px; cursor: pointer; font-family: var(--font);
-      border-radius: 4px; font-weight: 600; min-height: 44px;
+      background: #801010; color: #fff; border: none; padding: 11px 20px;
+      font-size: 14px; cursor: pointer; font-family: var(--font);
+      border-radius: 6px; font-weight: 700; min-height: 46px;
     }
     .btn-cancel-del {
-      background: transparent; color: #5a8ab0; border: 1px solid var(--border);
-      padding: 10px 18px; font-size: 13px; cursor: pointer;
-      font-family: var(--font); border-radius: 4px; min-height: 44px;
+      background: transparent; color: var(--text-dim); border: 2px solid var(--border);
+      padding: 11px 20px; font-size: 14px; cursor: pointer;
+      font-family: var(--font); border-radius: 6px; min-height: 46px;
     }
-    .empty-state { color: var(--text-muted); font-size: 15px; margin-top: 8px; }
+    .empty-state { color: var(--text-dim); font-size: 16px; margin-top: 8px; }
     .spacer { height: 32px; flex-shrink: 0; }
   </style>
 </head>
@@ -262,8 +276,8 @@
     <div class="card highlight" id="mounted-banner">
       <div>
         <div class="label-xs">Currently Mounted</div>
-        <div id="mounted-name" style="font-size:17px;font-weight:700;margin-bottom:4px;"></div>
-        <div id="mounted-meta" style="font-size:13px;color:var(--text-muted);"></div>
+        <div id="mounted-name" style="font-size:19px;font-weight:700;margin-bottom:5px;"></div>
+        <div id="mounted-meta" style="font-size:14px;color:var(--text-dim);"></div>
       </div>
       <div class="mounted-icon">◎</div>
     </div>
