@@ -323,11 +323,11 @@
 // Step 1 — Google Sheet published-to-web CSV URL
 // In your sheet: File → Share → Publish to web
 // Select the "Swap Log" sheet, CSV format, click Publish, copy the URL
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIM-hY5GSgQKAbWTATg4Qf4CgTNGiNmq2BNfXCt_dsdRlyPPZwEZNA4rJoLk6fqA/pub?gid=1916656118&single=true&output=csv";
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1mjVLKjgZ-qPQUmwk3LIzcZvpCDYOBLqlOKnMHmv6suM/export?format=csv&gid=0";
 
 // Step 2 — Apps Script web app deployment URL
 // After deploying Code.gs (see SETUP.md), paste the /exec URL here
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKKYyDxT3mM9_cMD7tM9qCQQKKVdnRliaNo_yVgMNtl98-4l9GP_x8Yki5rBmxqjHG/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfdUAeagPLTO658dnjf0R5u6WVe1zIo9-4YiqSD3SUyoH1kamPSt3LRujlbq0ykKV5/exec";
 
 // ═══════════════════════════════════════════════════════════
 //  TIRE SET DEFINITIONS
@@ -342,12 +342,11 @@ const TIRE_SETS = [
 // ═══════════════════════════════════════════════════════════
 let appData = { swaps: [], currentSet: null };
 
-// Parse CSV from the published sheet.
-// Expected columns: #, Date, Tire Set, Odometer, Miles Stretch, Summer Total, Winter Total, Notes
+// Parse CSV from the sheet.
+// Columns: A=#, B=Date, C=Tire Set, D=Odometer, E=Notes
 function parseCSV(csv) {
   const lines = csv.trim().split("\n");
   const rows  = lines.map(l => {
-    // Handle quoted fields with commas inside
     const cols = []; let cur = ""; let inQ = false;
     for (const ch of l) {
       if (ch === '"') { inQ = !inQ; }
@@ -358,7 +357,7 @@ function parseCSV(csv) {
     return cols;
   });
 
-  // Skip any header rows — data rows have a numeric value in column D (index 3)
+  // Skip header row — data rows have a numeric odometer in column D (index 3)
   const dataRows = rows.filter(c => c[3] && /^\d[\d,]*$/.test(c[3].replace(/,/g, "")));
 
   const swaps = dataRows.map((c, i) => ({
@@ -366,7 +365,7 @@ function parseCSV(csv) {
     date:     c[1] || "",
     setId:    c[2] || "",
     odometer: parseInt(c[3].replace(/,/g, "")) || 0,
-    notes:    c[7] || "",
+    notes:    c[4] || "",
   })).filter(s => s.odometer > 0 && s.setId);
 
   const sorted     = [...swaps].sort((a, b) => b.odometer - a.odometer);
@@ -380,28 +379,23 @@ async function fetchSheetData() {
     document.getElementById("config-banner").style.display = "block";
     return;
   }
-  const bust = SHEET_CSV_URL.includes("?") ? "&t=" : "?t=";
-  const res  = await fetch(SHEET_CSV_URL + bust + Date.now());
+  const url = SHEET_CSV_URL + "&t=" + Date.now();
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Sheet fetch failed (HTTP ${res.status})`);
   appData = parseCSV(await res.text());
 }
 
-// ─── Write via Apps Script ────────────────────────────────
-// Apps Script Web Apps can't handle CORS preflight (OPTIONS requests),
-// so we use no-cors mode with form-encoded data to bypass it.
-// The response is opaque in no-cors mode, so we re-fetch the sheet
-// to confirm success rather than reading the response body.
+// ─── Write via Apps Script (GET to avoid CORS) ───────────
+// Apps Script GET requests are CORS-safe from any origin.
+// We pass the payload as URL query parameters.
 async function postToScript(payload) {
   if (!SCRIPT_URL) throw new Error("SCRIPT_URL not configured — see SETUP.md");
-  const body = new URLSearchParams({ payload: JSON.stringify(payload) });
-  await fetch(SCRIPT_URL, {
-    method:  "POST",
-    mode:    "no-cors",
-    body,
-  });
-  // no-cors gives an opaque response — we can't read status.
-  // Wait briefly then re-fetch the sheet; if the row appears, it worked.
-  await new Promise(r => setTimeout(r, 1200));
+  const params = new URLSearchParams(payload);
+  const res    = await fetch(`${SCRIPT_URL}?${params.toString()}`);
+  if (!res.ok) throw new Error(`Script request failed (HTTP ${res.status})`);
+  const json = await res.json();
+  if (json.status !== "ok") throw new Error(json.message || "Script returned an error");
+  return json;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -591,9 +585,6 @@ async function saveSwap() {
   try {
     await postToScript({ action: "addSwap", date, odometer: odo, tireSet: selectedSetId, notes });
     await fetchSheetData();
-    // Verify the row actually landed
-    const found = appData.swaps.some(s => s.odometer === odo && s.setId === selectedSetId);
-    if (!found) throw new Error("Row not found after save — check Apps Script logs");
     showStatus("SAVED ✓", "ok");
     showView("dashboard");
   } catch (err) {
