@@ -327,7 +327,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIM-hY5G
 
 // Step 2 — Apps Script web app deployment URL
 // After deploying Code.gs (see SETUP.md), paste the /exec URL here
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHw474JntCXS1JSTbDM5tY5tqzX89tLmqauymNmlKnOoahfJ2yqMYJul-qidt1eTNq/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6JIZ_SJ-OiTXwwLrnxD1KX9gCSevdRmRmH1XTcldcNRlkH9z049I0LTlNYKqEmclm/exec";
 
 // ═══════════════════════════════════════════════════════════
 //  TIRE SET DEFINITIONS
@@ -387,12 +387,21 @@ async function fetchSheetData() {
 }
 
 // ─── Write via Apps Script ────────────────────────────────
+// Apps Script Web Apps can't handle CORS preflight (OPTIONS requests),
+// so we use no-cors mode with form-encoded data to bypass it.
+// The response is opaque in no-cors mode, so we re-fetch the sheet
+// to confirm success rather than reading the response body.
 async function postToScript(payload) {
   if (!SCRIPT_URL) throw new Error("SCRIPT_URL not configured — see SETUP.md");
-  const res  = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
-  const json = await res.json();
-  if (json.status !== "ok") throw new Error(json.message || "Script returned an error");
-  return json;
+  const body = new URLSearchParams({ payload: JSON.stringify(payload) });
+  await fetch(SCRIPT_URL, {
+    method:  "POST",
+    mode:    "no-cors",
+    body,
+  });
+  // no-cors gives an opaque response — we can't read status.
+  // Wait briefly then re-fetch the sheet; if the row appears, it worked.
+  await new Promise(r => setTimeout(r, 1200));
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -581,8 +590,11 @@ async function saveSwap() {
 
   try {
     await postToScript({ action: "addSwap", date, odometer: odo, tireSet: selectedSetId, notes });
-    showStatus("SAVED ✓", "ok");
     await fetchSheetData();
+    // Verify the row actually landed
+    const found = appData.swaps.some(s => s.odometer === odo && s.setId === selectedSetId);
+    if (!found) throw new Error("Row not found after save — check Apps Script logs");
+    showStatus("SAVED ✓", "ok");
     showView("dashboard");
   } catch (err) {
     showStatus("Save failed", "error");
@@ -648,8 +660,8 @@ async function confirmDelete(id) {
   showStatus("Deleting...", "ok", 0);
   try {
     await postToScript({ action: "deleteSwap", date: swap.date, odometer: swap.odometer, tireSet: swap.setId });
-    showStatus("Deleted ✓", "ok");
     await fetchSheetData();
+    showStatus("Deleted ✓", "ok");
     pendingDelete = null;
     renderHistory();
   } catch (err) {
