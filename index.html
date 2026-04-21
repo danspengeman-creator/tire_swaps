@@ -122,10 +122,19 @@
 
     #mounted-banner { display: flex; justify-content: space-between; align-items: center; }
     .mounted-icon { flex-shrink: 0; margin-left: 12px; }
-    .rolling-tire {
-      animation: roll 1.8s linear infinite;
+    .tire-wrap {
+      position: relative;
+      width: 80px; height: 80px;
+    }
+    .tire-spinner {
+      position: absolute; top: 0; left: 0;
+      animation: roll 2s linear infinite;
       transform-origin: center;
-      filter: drop-shadow(0 0 6px rgba(255,255,255,0.2));
+    }
+    .tire-caliper {
+      position: absolute; top: 0; left: 0;
+      /* No animation — stays perfectly still */
+      pointer-events: none;
     }
     @keyframes roll {
       from { transform: rotate(0deg); }
@@ -135,11 +144,6 @@
       font-size: 12px; letter-spacing: 2px; color: var(--text-dim);
       text-transform: uppercase; margin-bottom: 6px; font-weight: 600;
     }
-
-    /* ── Odometer card ── */
-    #odo-card { display: flex; align-items: center; gap: 16px; }
-    #odo-card input { width: 160px; font-size: 24px; font-weight: 700; color: #fff; padding: 8px 12px; }
-    #odo-hint { font-size: 13px; color: #fff; line-height: 1.6; opacity: 0.7; }
 
     /* ── Tire set cards ── */
     .tire-card {
@@ -289,37 +293,51 @@
         <div id="mounted-meta" style="font-size:14px;color:var(--text-dim);"></div>
       </div>
       <div class="mounted-icon">
-        <svg class="rolling-tire" viewBox="0 0 64 64" width="60" height="60" xmlns="http://www.w3.org/2000/svg">
-          <!-- Outer tire: filled annulus using clip, so it's a solid ring -->
-          <!-- Sidewall (outer filled circle) -->
-          <circle cx="32" cy="32" r="31" fill="rgba(255,255,255,0.9)"/>
-          <!-- Cutout for the inner tire opening -->
-          <circle cx="32" cy="32" r="22" fill="#02193f"/>
-          <!-- Rim ring -->
-          <circle cx="32" cy="32" r="19" fill="rgba(255,255,255,0.55)"/>
-          <!-- Rim cutout -->
-          <circle cx="32" cy="32" r="14" fill="#02193f"/>
-          <!-- Hub cap -->
-          <circle cx="32" cy="32" r="5" fill="rgba(255,255,255,0.85)"/>
-          <!-- Spokes — between hub edge (r=6) and rim inner edge (r=13) -->
-          <line x1="32" y1="26" x2="32" y2="19" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="32" y1="38" x2="32" y2="45" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="26" y1="32" x2="19" y2="32" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="38" y1="32" x2="45" y2="32" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="27.7" y1="27.7" x2="22.7" y2="22.7" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="36.3" y1="36.3" x2="41.3" y2="41.3" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="36.3" y1="27.7" x2="41.3" y2="22.7" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="27.7" y1="36.3" x2="22.7" y2="41.3" stroke="rgba(255,255,255,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
+        <!-- Static wrapper holds everything; only .tire-spinner rotates -->
+        <div class="tire-wrap">
+          <!-- Rotating layer: tire + rim + spokes -->
+          <svg class="tire-spinner" viewBox="0 0 80 80" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+            <!-- Black outer tire sidewall -->
+            <circle cx="40" cy="40" r="38" fill="#111111"/>
+            <!-- Tire inner edge cutout -->
+            <circle cx="40" cy="40" r="27" fill="#1e1e1e"/>
+            <!-- Dark gray rim -->
+            <circle cx="40" cy="40" r="26" fill="#3a3a3a"/>
+            <!-- Rim inner cutout / window -->
+            <circle cx="40" cy="40" r="16" fill="#1e1e1e"/>
+            <!-- Hub -->
+            <circle cx="40" cy="40" r="6" fill="#555555"/>
+            <!-- Lug nut dots -->
+            <circle cx="40" cy="26" r="2" fill="#222"/>
+            <circle cx="40" cy="54" r="2" fill="#222"/>
+            <circle cx="26" cy="40" r="2" fill="#222"/>
+            <circle cx="54" cy="40" r="2" fill="#222"/>
+            <!-- Spokes -->
+            <line x1="40" y1="34" x2="40" y2="22" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="40" y1="46" x2="40" y2="58" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="34" y1="40" x2="22" y2="40" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="46" y1="40" x2="58" y2="40" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="35.8" y1="35.8" x2="27.5" y2="27.5" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="44.2" y1="44.2" x2="52.5" y2="52.5" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="44.2" y1="35.8" x2="52.5" y2="27.5" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <line x1="35.8" y1="44.2" x2="27.5" y2="52.5" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+            <!-- Rim outer highlight ring -->
+            <circle cx="40" cy="40" r="26" fill="none" stroke="#555" stroke-width="1"/>
+          </svg>
+          <!-- Static layer: caliper — does NOT rotate -->
+          <svg class="tire-caliper" viewBox="0 0 80 80" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+            <!-- Caliper body: arc shape on the left side peeking through rim gap -->
+            <path d="M 17 28 Q 10 40 17 52" fill="none" stroke="#CBE800" stroke-width="5" stroke-linecap="round"/>
+            <path d="M 20 30 Q 14 40 20 50" fill="none" stroke="#CBE800" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+            <!-- Caliper bracket top -->
+            <line x1="17" y1="28" x2="24" y2="26" stroke="#CBE800" stroke-width="4" stroke-linecap="round"/>
+            <!-- Caliper bracket bottom -->
+            <line x1="17" y1="52" x2="24" y2="54" stroke="#CBE800" stroke-width="4" stroke-linecap="round"/>
+            <!-- Bleed screw dot -->
+            <circle cx="13" cy="40" r="2.5" fill="#CBE800"/>
+          </svg>
+        </div>
       </div>
-    </div>
-
-    <div class="card" id="odo-card">
-      <div>
-        <div class="label-xs" style="margin-bottom:4px;">Current Odometer</div>
-        <input type="number" inputmode="numeric" id="odo-input" placeholder="e.g. 74500" />
-      </div>
-      <div id="odo-hint">Update to<br>refresh totals</div>
     </div>
 
     <div id="tire-cards"></div>
@@ -453,7 +471,7 @@ function getMileage(swaps, currentOdo) {
   const sorted = [...swaps].sort((a, b) => a.odometer - b.odometer);
   sorted.forEach((swap, i) => {
     const next   = sorted[i + 1];
-    const endOdo = next ? next.odometer : (currentOdo || swap.odometer);
+    const endOdo = next ? next.odometer : swap.odometer; // open stretch = 0 miles until next swap logged
     if (swap.setId && totals[swap.setId] !== undefined)
       totals[swap.setId] += Math.max(0, endOdo - swap.odometer);
   });
@@ -510,8 +528,7 @@ function showView(name) {
 //  DASHBOARD
 // ═══════════════════════════════════════════════════════════
 function renderDashboard() {
-  const odo     = parseInt(document.getElementById("odo-input").value) || 0;
-  const mileage = getMileage(appData.swaps, odo);
+  const mileage = getMileage(appData.swaps, 0);
   const sorted  = [...appData.swaps].sort((a, b) => b.odometer - a.odometer);
   const cur     = TIRE_SETS.find(t => t.id === appData.currentSet);
 
@@ -561,11 +578,6 @@ function renderDashboard() {
       </div>`;
   });
 }
-
-document.getElementById("odo-input").addEventListener("input", () => {
-  if (document.getElementById("view-dashboard").classList.contains("active"))
-    renderDashboard();
-});
 
 // ═══════════════════════════════════════════════════════════
 //  LOG SWAP
@@ -647,7 +659,6 @@ async function saveSwap() {
 let pendingDelete = null;
 
 function renderHistory() {
-  const odo    = parseInt(document.getElementById("odo-input").value) || 0;
   const sorted = [...appData.swaps].sort((a, b) => b.odometer - a.odometer);
   const chron  = [...appData.swaps].sort((a, b) => a.odometer - b.odometer);
   const list   = document.getElementById("history-list");
@@ -661,7 +672,7 @@ function renderHistory() {
     const ts     = TIRE_SETS.find(t => t.id === swap.setId);
     const ci     = chron.findIndex(s => s.id === swap.id);
     const next   = chron[ci + 1];
-    const endOdo = next ? next.odometer : odo;
+    const endOdo = next ? next.odometer : swap.odometer;
     const miles  = Math.max(0, endOdo - swap.odometer);
     const isOld  = swap.id === chron[0]?.id;
     const isDel  = pendingDelete === swap.id;
