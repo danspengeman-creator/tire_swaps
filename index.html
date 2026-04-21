@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>WRX Tire Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --wrb:        #005BAC;
+      --wrb-light:  #1a7fd4;
+      --wrb-dim:    #003d75;
+      --gold:       #C8A800;
+      --bg:         #080c10;
+      --surface:    #0d1520;
+      --surface2:   #111d2e;
+      --border:     #1a2e44;
+      --text:       #c8d8e8;
+      --text-dim:   #4a7aaa;
+      --text-muted: #3a5a7a;
+      --danger:     #e05555;
+      --danger-dim: #e07070;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    html, body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      max-width: 480px; margin: 0 auto;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+
+    .stripe {
+      height: 4px;
+      background: linear-gradient(90deg, var(--wrb) 0%, var(--wrb-light) 65%, var(--gold) 100%);
+      flex-shrink: 0;
+    }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 16px 20px 12px; display: flex;
+      align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .header-sub   { font-size: 11px; letter-spacing: 3px; color: var(--wrb-dim); margin-bottom: 3px; text-transform: uppercase; }
+    .header-title { font-size: 22px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+    .header-title span { color: var(--wrb-light); }
+
+    #status-badge {
+      font-size: 11px; letter-spacing: 1.5px; font-weight: 600;
+      opacity: 0; transition: opacity 0.3s; text-align: right; line-height: 1.5;
+    }
+    #status-badge.show  { opacity: 1; }
+    #status-badge.ok    { color: var(--gold); }
+    #status-badge.error { color: var(--danger); }
+
+    nav {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; flex-shrink: 0;
+    }
+    nav button {
+      flex: 1; background: transparent; color: var(--text-dim); border: none;
+      border-top: 3px solid transparent; padding: 14px 4px 12px;
+      font-size: 11px; letter-spacing: 1.5px; font-weight: 400;
+      cursor: pointer; font-family: var(--font); text-transform: uppercase;
+      min-height: 52px; transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    nav button.active {
+      background: var(--wrb); color: #fff;
+      border-top-color: var(--wrb-light); font-weight: 700;
+    }
+
+    .view { display: none; padding: 16px; flex: 1; }
+    .view.active { display: block; }
+
+    /* Loading overlay */
+    #loading-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px; z-index: 100;
+    }
+    #loading-overlay.hidden { display: none; }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--wrb-light); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text  { font-size: 13px; color: var(--text-dim); letter-spacing: 2px; }
+    .error-icon    { font-size: 32px; }
+    .error-message {
+      font-size: 14px; color: var(--danger-dim); text-align: center;
+      max-width: 300px; line-height: 1.7; white-space: pre-line;
+    }
+    .btn-retry {
+      background: var(--wrb); color: #fff; border: none;
+      padding: 12px 24px; font-size: 13px; font-family: var(--font);
+      border-radius: 4px; cursor: pointer; letter-spacing: 1px;
+    }
+
+    /* Config banner */
+    #config-banner {
+      background: var(--surface2); border: 1px solid var(--gold);
+      border-left: 4px solid var(--gold); border-radius: 4px;
+      padding: 14px 16px; margin-bottom: 14px;
+      font-size: 13px; color: #8a9aaa; line-height: 1.7; display: none;
+    }
+    #config-banner strong { color: var(--gold); display: block; margin-bottom: 4px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; padding: 16px; margin-bottom: 14px;
+    }
+    .card.highlight { border-color: var(--wrb); border-left: 5px solid var(--wrb-light); }
+
+    #mounted-banner { display: flex; justify-content: space-between; align-items: center; }
+    .mounted-icon { font-size: 30px; opacity: 0.35; }
+    .label-xs {
+      font-size: 11px; letter-spacing: 2px; color: var(--text-dim);
+      text-transform: uppercase; margin-bottom: 5px;
+    }
+
+    #odo-card { display: flex; align-items: center; gap: 14px; }
+    #odo-card input { width: 150px; font-size: 22px; font-weight: 700; color: #fff; padding: 8px 12px; }
+    #odo-hint { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+    .tire-card {
+      background: var(--surface); border-radius: 4px; padding: 18px 16px;
+      margin-bottom: 14px; position: relative; border: 1px solid var(--border);
+    }
+    .on-car-badge {
+      position: absolute; top: 12px; right: 12px; font-size: 11px;
+      letter-spacing: 1.5px; font-weight: 600; background: var(--surface2);
+      padding: 3px 8px; border-radius: 2px;
+    }
+    .tire-set-label { font-size: 11px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
+    .tire-set-name  { font-size: 13px; color: #5a7a9a; margin-bottom: 16px; }
+    .miles-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+    .miles-big { font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -1px; }
+    .miles-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
+    .pct-big   { font-size: 30px; font-weight: 700; line-height: 1; text-align: right; }
+    .pct-sub   { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; text-align: right; }
+    .progress-track { background: #0a1520; height: 5px; border-radius: 2px; margin-bottom: 10px; }
+    .progress-bar   { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+    .tire-status    { font-size: 13px; line-height: 1.4; color: var(--text-muted); }
+    .tire-status.warn { color: var(--danger-dim); }
+
+    .btn-primary {
+      width: 100%; background: var(--wrb); color: #fff; border: none;
+      padding: 18px; font-size: 15px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; cursor: pointer; font-family: var(--font);
+      border-radius: 4px; min-height: 56px;
+    }
+    .btn-primary:hover { background: var(--wrb-light); }
+
+    .form-section { margin-bottom: 18px; }
+    .form-label { font-size: 13px; color: #5a8ab0; margin-bottom: 7px; font-weight: 600; display: block; }
+    input[type="date"], input[type="number"], textarea {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: #ddeeff; padding: 14px 16px; font-size: 17px;
+      font-family: var(--font); outline: none; width: 100%;
+      border-radius: 4px; -webkit-appearance: none;
+    }
+    input:focus, textarea:focus { border-color: var(--wrb-light); }
+    textarea { resize: vertical; min-height: 80px; font-size: 15px; }
+
+    .set-picker { display: flex; gap: 10px; }
+    .set-btn {
+      flex: 1; padding: 16px 8px; background: var(--surface2); color: #5a8ab0;
+      border: 2px solid var(--border); cursor: pointer; font-family: var(--font);
+      border-radius: 4px; line-height: 1.5; min-height: 72px; text-align: center;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .set-btn .set-short { font-size: 15px; font-weight: 700; display: block; }
+    .set-btn .set-long  { font-size: 11px; opacity: 0.85; margin-top: 3px; display: block; }
+
+    .form-actions { display: flex; gap: 10px; }
+    .btn-save {
+      flex: 2; background: var(--wrb); color: #fff; border: none;
+      padding: 18px; font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; cursor: pointer; font-family: var(--font);
+      border-radius: 4px; min-height: 56px;
+    }
+    .btn-save:disabled { background: #1a2a3a; color: #3a5a7a; cursor: not-allowed; }
+    .btn-cancel {
+      flex: 1; background: transparent; color: #5a8ab0; border: 1px solid var(--border);
+      padding: 18px; font-size: 15px; cursor: pointer; font-family: var(--font);
+      border-radius: 4px; min-height: 56px;
+    }
+
+    .swap-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; border-left-width: 4px; padding: 14px; margin-bottom: 10px;
+    }
+    .swap-top   { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .swap-set   { font-size: 15px; font-weight: 700; }
+    .swap-meta  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+    .swap-notes { font-size: 13px; color: #4a6a7a; margin-top: 4px; }
+    .swap-miles { text-align: right; margin-left: 12px; flex-shrink: 0; }
+    .swap-miles-big { font-size: 22px; font-weight: 700; color: #6a9aca; line-height: 1; }
+    .swap-miles-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .swap-actions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px; }
+    .btn-remove {
+      background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+      padding: 8px 14px; font-size: 11px; cursor: pointer; font-family: var(--font);
+      border-radius: 4px; letter-spacing: 1px; min-height: 40px;
+    }
+    .btn-confirm-del {
+      background: #801010; color: #fff; border: none; padding: 10px 18px;
+      font-size: 13px; cursor: pointer; font-family: var(--font);
+      border-radius: 4px; font-weight: 600; min-height: 44px;
+    }
+    .btn-cancel-del {
+      background: transparent; color: #5a8ab0; border: 1px solid var(--border);
+      padding: 10px 18px; font-size: 13px; cursor: pointer;
+      font-family: var(--font); border-radius: 4px; min-height: 44px;
+    }
+    .empty-state { color: var(--text-muted); font-size: 15px; margin-top: 8px; }
+    .spacer { height: 32px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"     id="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading from Google Sheets...</div>
+  <div class="error-icon"   id="error-icon"    style="display:none">⚠</div>
+  <div class="error-message" id="error-message" style="display:none"></div>
+  <button class="btn-retry"  id="btn-retry"     style="display:none" onclick="init()">Retry</button>
+</div>
+
+<div id="app">
+  <div class="stripe"></div>
+
+  <header>
+    <div>
+      <div class="header-sub">2015 WRX · FA20</div>
+      <div class="header-title">Tire <span>Tracker</span></div>
+    </div>
+    <div id="status-badge"></div>
+  </header>
+
+  <nav>
+    <button class="active" onclick="showView('dashboard')" id="tab-dashboard">Dashboard</button>
+    <button onclick="showView('log')"     id="tab-log">Log Swap</button>
+    <button onclick="showView('history')" id="tab-history">History</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div id="config-banner">
+      <strong>Setup Required</strong>
+      Open <code>index.html</code> in a text editor and fill in
+      <code>SHEET_CSV_URL</code> and <code>SCRIPT_URL</code> at the top of the
+      &lt;script&gt; section. See SETUP.md for step-by-step instructions.
+    </div>
+
+    <div class="card highlight" id="mounted-banner">
+      <div>
+        <div class="label-xs">Currently Mounted</div>
+        <div id="mounted-name" style="font-size:17px;font-weight:700;margin-bottom:4px;"></div>
+        <div id="mounted-meta" style="font-size:13px;color:var(--text-muted);"></div>
+      </div>
+      <div class="mounted-icon">◎</div>
+    </div>
+
+    <div class="card" id="odo-card">
+      <div>
+        <div class="label-xs" style="margin-bottom:4px;">Current Odometer</div>
+        <input type="number" inputmode="numeric" id="odo-input" placeholder="e.g. 74500" />
+      </div>
+      <div id="odo-hint">Update to<br>refresh totals</div>
+    </div>
+
+    <div id="tire-cards"></div>
+
+    <button class="btn-primary" onclick="showView('log')">+ Log Tire Swap</button>
+  </div>
+
+  <!-- LOG SWAP -->
+  <div class="view" id="view-log">
+    <div class="label-xs" style="margin-bottom:24px;">Log a Swap</div>
+    <div class="form-section">
+      <label class="form-label" for="swap-date">Date</label>
+      <input type="date" id="swap-date" />
+    </div>
+    <div class="form-section">
+      <label class="form-label" for="swap-odo">Odometer (mi)</label>
+      <input type="number" inputmode="numeric" id="swap-odo" placeholder="e.g. 75200" />
+    </div>
+    <div class="form-section">
+      <div class="form-label">Mounting</div>
+      <div class="set-picker" id="set-picker"></div>
+    </div>
+    <div class="form-section">
+      <label class="form-label" for="swap-notes">Notes (optional)</label>
+      <textarea id="swap-notes" placeholder="e.g. Pre-season swap, rotation done"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" id="btn-save-swap" onclick="saveSwap()" disabled>Save Swap</button>
+      <button class="btn-cancel" onclick="showView('dashboard')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="view" id="view-history">
+    <div class="label-xs" style="margin-bottom:16px;">Swap History</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div class="spacer"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIGURATION  ← paste your two URLs here after setup
+// ═══════════════════════════════════════════════════════════
+
+// Step 1 — Google Sheet published-to-web CSV URL
+// In your sheet: File → Share → Publish to web
+// Select the "Swap Log" sheet, CSV format, click Publish, copy the URL
+const SHEET_CSV_URL = "";
+
+// Step 2 — Apps Script web app deployment URL
+// After deploying Code.gs (see SETUP.md), paste the /exec URL here
+const SCRIPT_URL = "";
+
+// ═══════════════════════════════════════════════════════════
+//  TIRE SET DEFINITIONS
+// ═══════════════════════════════════════════════════════════
+const TIRE_SETS = [
+  { id: "Summer", name: "Michelin Pilot Sport 4S",        shortName: "Summer", treadLife: 30000, color: "#C8A800" },
+  { id: "Winter", name: "Continental ExtremeContact DWS", shortName: "Winter", treadLife: 50000, color: "#1a7fd4" },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════
+let appData = { swaps: [], currentSet: null };
+
+// Parse CSV from the published sheet.
+// Expected columns: #, Date, Tire Set, Odometer, Miles Stretch, Summer Total, Winter Total, Notes
+function parseCSV(csv) {
+  const lines = csv.trim().split("\n");
+  const rows  = lines.map(l => {
+    // Handle quoted fields with commas inside
+    const cols = []; let cur = ""; let inQ = false;
+    for (const ch of l) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === "," && !inQ) { cols.push(cur.trim()); cur = ""; }
+      else cur += ch;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+
+  // Skip any header rows — data rows have a numeric value in column D (index 3)
+  const dataRows = rows.filter(c => c[3] && /^\d[\d,]*$/.test(c[3].replace(/,/g, "")));
+
+  const swaps = dataRows.map((c, i) => ({
+    id:       i + 1,
+    date:     c[1] || "",
+    setId:    c[2] || "",
+    odometer: parseInt(c[3].replace(/,/g, "")) || 0,
+    notes:    c[7] || "",
+  })).filter(s => s.odometer > 0 && s.setId);
+
+  const sorted     = [...swaps].sort((a, b) => b.odometer - a.odometer);
+  const currentSet = sorted.length > 0 ? sorted[0].setId : null;
+  return { swaps, currentSet };
+}
+
+// ─── Fetch ────────────────────────────────────────────────
+async function fetchSheetData() {
+  if (!SHEET_CSV_URL) {
+    document.getElementById("config-banner").style.display = "block";
+    return;
+  }
+  const bust = SHEET_CSV_URL.includes("?") ? "&t=" : "?t=";
+  const res  = await fetch(SHEET_CSV_URL + bust + Date.now());
+  if (!res.ok) throw new Error(`Sheet fetch failed (HTTP ${res.status})`);
+  appData = parseCSV(await res.text());
+}
+
+// ─── Write via Apps Script ────────────────────────────────
+async function postToScript(payload) {
+  if (!SCRIPT_URL) throw new Error("SCRIPT_URL not configured — see SETUP.md");
+  const res  = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+  const json = await res.json();
+  if (json.status !== "ok") throw new Error(json.message || "Script returned an error");
+  return json;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MILEAGE CALC
+// ═══════════════════════════════════════════════════════════
+function getMileage(swaps, currentOdo) {
+  const totals = {};
+  TIRE_SETS.forEach(t => (totals[t.id] = 0));
+  const sorted = [...swaps].sort((a, b) => a.odometer - b.odometer);
+  sorted.forEach((swap, i) => {
+    const next   = sorted[i + 1];
+    const endOdo = next ? next.odometer : (currentOdo || swap.odometer);
+    if (swap.setId && totals[swap.setId] !== undefined)
+      totals[swap.setId] += Math.max(0, endOdo - swap.odometer);
+  });
+  return totals;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════════
+function showStatus(msg, type = "ok", duration = 2500) {
+  const el = document.getElementById("status-badge");
+  el.textContent = msg;
+  el.className   = `show ${type}`;
+  if (duration) setTimeout(() => (el.className = type), duration);
+}
+
+function showLoading(msg = "Loading from Google Sheets...") {
+  document.getElementById("loading-overlay").classList.remove("hidden");
+  document.getElementById("spinner").style.display       = "block";
+  document.getElementById("loading-text").style.display  = "block";
+  document.getElementById("loading-text").textContent    = msg;
+  document.getElementById("error-icon").style.display    = "none";
+  document.getElementById("error-message").style.display = "none";
+  document.getElementById("btn-retry").style.display     = "none";
+}
+
+function hideLoading() {
+  document.getElementById("loading-overlay").classList.add("hidden");
+}
+
+function showLoadError(msg) {
+  document.getElementById("spinner").style.display       = "none";
+  document.getElementById("loading-text").style.display  = "none";
+  document.getElementById("error-icon").style.display    = "block";
+  document.getElementById("error-message").style.display = "block";
+  document.getElementById("error-message").textContent   = msg;
+  document.getElementById("btn-retry").style.display     = "block";
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(`view-${name}`).classList.add("active");
+  document.getElementById(`tab-${name}`).classList.add("active");
+  if (name === "dashboard") renderDashboard();
+  if (name === "log")       initLogForm();
+  if (name === "history")   renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDashboard() {
+  const odo     = parseInt(document.getElementById("odo-input").value) || 0;
+  const mileage = getMileage(appData.swaps, odo);
+  const sorted  = [...appData.swaps].sort((a, b) => b.odometer - a.odometer);
+  const cur     = TIRE_SETS.find(t => t.id === appData.currentSet);
+
+  if (cur) {
+    const latest = sorted[0];
+    document.getElementById("mounted-name").textContent = cur.name;
+    document.getElementById("mounted-name").style.color = cur.color;
+    document.getElementById("mounted-meta").textContent =
+      latest ? `Since ${latest.date} · ${latest.odometer.toLocaleString()} mi` : "";
+  } else {
+    document.getElementById("mounted-name").textContent = "No swaps logged yet";
+    document.getElementById("mounted-name").style.color = "var(--text-muted)";
+    document.getElementById("mounted-meta").textContent = "Log your first swap to get started";
+  }
+
+  const container = document.getElementById("tire-cards");
+  container.innerHTML = "";
+  TIRE_SETS.forEach(ts => {
+    const miles     = mileage[ts.id] || 0;
+    const pct       = Math.min(miles / ts.treadLife * 100, 100);
+    const warn      = pct > 75;
+    const isCurrent = appData.currentSet === ts.id;
+    const remaining = ts.treadLife - miles;
+    container.innerHTML += `
+      <div class="tire-card" style="border-top:4px solid ${ts.color};${isCurrent ? `border-color:${ts.color};` : ""}">
+        ${isCurrent ? `<div class="on-car-badge" style="color:${ts.color};border:1px solid ${ts.color};">ON CAR</div>` : ""}
+        <div class="tire-set-label">${ts.shortName} Set</div>
+        <div class="tire-set-name">${ts.name}</div>
+        <div class="miles-row">
+          <div>
+            <div class="miles-big" style="color:${warn ? "var(--danger)" : "#fff"}">${miles.toLocaleString()}</div>
+            <div class="miles-sub">miles accumulated</div>
+          </div>
+          <div>
+            <div class="pct-big" style="color:${warn ? "var(--danger)" : ts.color}">${Math.round(pct)}%</div>
+            <div class="pct-sub">used</div>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" style="width:${pct}%;background:${warn ? "var(--danger)" : ts.color};"></div>
+        </div>
+        <div class="tire-status${warn ? " warn" : ""}">
+          ${warn
+            ? `⚠ ${remaining.toLocaleString()} mi remaining — inspect tread soon`
+            : `${remaining.toLocaleString()} mi remaining of ${ts.treadLife.toLocaleString()} mi limit`}
+        </div>
+      </div>`;
+  });
+}
+
+document.getElementById("odo-input").addEventListener("input", () => {
+  if (document.getElementById("view-dashboard").classList.contains("active"))
+    renderDashboard();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  LOG SWAP
+// ═══════════════════════════════════════════════════════════
+let selectedSetId = null;
+
+function initLogForm() {
+  document.getElementById("swap-date").value  = new Date().toISOString().split("T")[0];
+  document.getElementById("swap-odo").value   = "";
+  document.getElementById("swap-notes").value = "";
+  selectedSetId = null;
+
+  const picker = document.getElementById("set-picker");
+  picker.innerHTML = "";
+  TIRE_SETS.forEach(ts => {
+    const btn     = document.createElement("button");
+    btn.className = "set-btn";
+    btn.id        = `set-btn-${ts.id}`;
+    btn.innerHTML = `<span class="set-short">${ts.shortName}</span><span class="set-long">${ts.name}</span>`;
+    btn.onclick   = () => selectSet(ts.id, ts.color);
+    picker.appendChild(btn);
+  });
+  updateSaveBtn();
+}
+
+function selectSet(id, color) {
+  selectedSetId = id;
+  TIRE_SETS.forEach(ts => {
+    const btn = document.getElementById(`set-btn-${ts.id}`);
+    if (ts.id === id) {
+      btn.style.background  = color;
+      btn.style.borderColor = color;
+      btn.style.color       = id === "Summer" ? "#000" : "#fff";
+      btn.style.fontWeight  = "700";
+    } else {
+      btn.style.background  = "var(--surface2)";
+      btn.style.borderColor = "var(--border)";
+      btn.style.color       = "#5a8ab0";
+      btn.style.fontWeight  = "400";
+    }
+  });
+  updateSaveBtn();
+}
+
+function updateSaveBtn() {
+  const odo = document.getElementById("swap-odo")?.value;
+  const btn = document.getElementById("btn-save-swap");
+  if (btn) btn.disabled = !(odo && selectedSetId);
+}
+document.addEventListener("input", e => { if (e.target.id === "swap-odo") updateSaveBtn(); });
+
+async function saveSwap() {
+  const odo   = parseInt(document.getElementById("swap-odo").value);
+  const date  = document.getElementById("swap-date").value;
+  const notes = document.getElementById("swap-notes").value.trim();
+  if (!odo || !selectedSetId) return;
+
+  const btn = document.getElementById("btn-save-swap");
+  btn.disabled    = true;
+  btn.textContent = "Saving...";
+  showStatus("Saving to sheet...", "ok", 0);
+
+  try {
+    await postToScript({ action: "addSwap", date, odometer: odo, tireSet: selectedSetId, notes });
+    showStatus("SAVED ✓", "ok");
+    await fetchSheetData();
+    showView("dashboard");
+  } catch (err) {
+    showStatus("Save failed", "error");
+    btn.disabled    = false;
+    btn.textContent = "Save Swap";
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════════════════
+let pendingDelete = null;
+
+function renderHistory() {
+  const odo    = parseInt(document.getElementById("odo-input").value) || 0;
+  const sorted = [...appData.swaps].sort((a, b) => b.odometer - a.odometer);
+  const chron  = [...appData.swaps].sort((a, b) => a.odometer - b.odometer);
+  const list   = document.getElementById("history-list");
+
+  if (sorted.length === 0) {
+    list.innerHTML = `<div class="empty-state">No swaps logged yet.</div>`;
+    return;
+  }
+
+  list.innerHTML = sorted.map(swap => {
+    const ts     = TIRE_SETS.find(t => t.id === swap.setId);
+    const ci     = chron.findIndex(s => s.id === swap.id);
+    const next   = chron[ci + 1];
+    const endOdo = next ? next.odometer : odo;
+    const miles  = Math.max(0, endOdo - swap.odometer);
+    const isOld  = swap.id === chron[0]?.id;
+    const isDel  = pendingDelete === swap.id;
+    return `
+      <div class="swap-item" style="border-left-color:${ts?.color || "var(--border)"}">
+        <div class="swap-top">
+          <div style="flex:1">
+            <div class="swap-set" style="color:${ts?.color || "var(--text)"}">${ts?.shortName} — ${ts?.name}</div>
+            <div class="swap-meta">${swap.date} · ${swap.odometer.toLocaleString()} mi${isOld ? " · earliest record" : ""}</div>
+            ${swap.notes ? `<div class="swap-notes">${swap.notes}</div>` : ""}
+          </div>
+          <div class="swap-miles">
+            <div class="swap-miles-big">${miles > 0 ? "+" + miles.toLocaleString() : "—"}</div>
+            <div class="swap-miles-sub">${next ? "mi this stretch" : "mi so far"}</div>
+          </div>
+        </div>
+        <div class="swap-actions">
+          ${isDel
+            ? `<button class="btn-confirm-del" onclick="confirmDelete(${swap.id})">Delete</button>
+               <button class="btn-cancel-del"  onclick="cancelDelete()">Cancel</button>`
+            : `<button class="btn-remove" onclick="requestDelete(${swap.id})">Remove</button>`}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function requestDelete(id) { pendingDelete = id; renderHistory(); }
+function cancelDelete()     { pendingDelete = null; renderHistory(); }
+
+async function confirmDelete(id) {
+  const swap = appData.swaps.find(s => s.id === id);
+  if (!swap) return;
+  showStatus("Deleting...", "ok", 0);
+  try {
+    await postToScript({ action: "deleteSwap", date: swap.date, odometer: swap.odometer, tireSet: swap.setId });
+    showStatus("Deleted ✓", "ok");
+    await fetchSheetData();
+    pendingDelete = null;
+    renderHistory();
+  } catch (err) {
+    showStatus("Delete failed", "error");
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  showLoading();
+  try {
+    await fetchSheetData();
+    hideLoading();
+    renderDashboard();
+  } catch (err) {
+    showLoadError(
+      !SHEET_CSV_URL
+        ? "SHEET_CSV_URL is not set.\nSee SETUP.md to finish configuration."
+        : `Could not load sheet data.\n\n${err.message}\n\nCheck that the sheet is published to the web.`
+    );
+  }
+}
+
+init();
+</script>
+</body>
+</html>
