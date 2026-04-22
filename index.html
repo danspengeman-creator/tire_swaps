@@ -125,9 +125,6 @@
     .tire-wrap {
       position: relative;
       width: 80px; height: 80px;
-      background: #02193f;
-      border-radius: 50%;
-      overflow: hidden;
     }
     .tire-spinner {
       display: block;
@@ -312,13 +309,12 @@
                The rim's inner circle uses the card background color as fill,
                which reveals the caliper in the gap between spokes. -->
           <svg class="tire-spinner" viewBox="0 0 80 80" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-            <!-- ① Caliper — static, painted before rotating group.
-                 Positioned inside the inner window zone (r < 17 from center)
-                 so the gap ring (r=27) never covers it. Right side, 3 o'clock. -->
-            <path d="M 53 33 Q 58 40 53 47" fill="none" stroke="#CBE800" stroke-width="4" stroke-linecap="round"/>
-            <line x1="53" y1="33" x2="48" y2="31" stroke="#CBE800" stroke-width="3" stroke-linecap="round"/>
-            <line x1="53" y1="47" x2="48" y2="49" stroke="#CBE800" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="56" cy="40" r="2" fill="#CBE800"/>
+            <!-- ① Caliper — static, painted before rotating group -->
+            <path d="M 57 27 Q 67 40 57 53" fill="none" stroke="#CBE800" stroke-width="6" stroke-linecap="round"/>
+            <path d="M 53 30 Q 62 40 53 50" fill="none" stroke="#CBE800" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+            <line x1="57" y1="27" x2="49" y2="24" stroke="#CBE800" stroke-width="4" stroke-linecap="round"/>
+            <line x1="57" y1="53" x2="49" y2="56" stroke="#CBE800" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="63" cy="40" r="3" fill="#CBE800"/>
 
             <!-- ② Rotating group wraps the rim/tire so only this part spins -->
             <g class="rim-spin">
@@ -328,8 +324,8 @@
               <circle cx="40" cy="40" r="27" fill="#02193f"/>
               <!-- Dark gray rim face -->
               <circle cx="40" cy="40" r="26" fill="#3a3a3a"/>
-              <!-- Rim inner window — transparent so static caliper beneath shows through -->
-              <circle cx="40" cy="40" r="17" fill="transparent"/>
+              <!-- Rim inner window — card bg color so caliper shows through spoke gaps -->
+              <circle cx="40" cy="40" r="17" fill="#02193f"/>
               <!-- Spokes -->
               <line x1="40" y1="34" x2="40" y2="21" stroke="#606060" stroke-width="3.5" stroke-linecap="round"/>
               <line x1="40" y1="46" x2="40" y2="59" stroke="#606060" stroke-width="3.5" stroke-linecap="round"/>
@@ -548,7 +544,7 @@ function renderDashboard() {
   if (cur) {
     const latest = sorted[0];
     document.getElementById("mounted-name").textContent = cur.name;
-    document.getElementById("mounted-name").style.color = cur.color;
+    document.getElementById("mounted-name").style.color = "#fff";
     document.getElementById("mounted-meta").textContent =
       latest ? `Since ${latest.date} · ${latest.odometer.toLocaleString()} mi` : "";
   } else {
