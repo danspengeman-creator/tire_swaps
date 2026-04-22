@@ -4,9 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>WRX Tire Tracker</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <!-- Favicon — full cross-platform stack -->
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="favicon-192.png" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png" />
+  <link rel="manifest" href="site.webmanifest" />
   <meta name="theme-color" content="#053a88" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -559,7 +563,13 @@ function renderDashboard() {
 
   const container = document.getElementById("tire-cards");
   container.innerHTML = "";
-  TIRE_SETS.forEach(ts => {
+  // Always show the mounted set first
+  const orderedSets = [...TIRE_SETS].sort((a, b) => {
+    if (a.id === appData.currentSet) return -1;
+    if (b.id === appData.currentSet) return 1;
+    return 0;
+  });
+  orderedSets.forEach(ts => {
     const miles     = mileage[ts.id] || 0;
     const pct       = Math.min(miles / ts.treadLife * 100, 100);
     const isCurrent = appData.currentSet === ts.id;
