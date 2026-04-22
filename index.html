@@ -52,16 +52,17 @@
     /* ── Header ── */
     header {
       background: var(--wrx); border-bottom: 1px solid var(--subaru);
-      padding: 18px 20px 14px; display: flex;
+      padding: 16px 20px 12px; display: flex;
       align-items: center; justify-content: space-between; flex-shrink: 0;
+      gap: 12px;
     }
     .header-sub   { font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.8); margin-bottom: 3px; text-transform: uppercase; }
     .header-title { font-size: 26px; font-weight: 700; letter-spacing: 1px; color: #fff; }
     .header-title span { color: var(--accent); }
 
     #status-badge {
-      font-size: 13px; letter-spacing: 1px; font-weight: 700;
-      opacity: 0; transition: opacity 0.3s; text-align: right; line-height: 1.5;
+      font-size: 11px; letter-spacing: 1px; font-weight: 700;
+      opacity: 0; transition: opacity 0.3s; line-height: 1.5; margin-top: 4px;
     }
     #status-badge.show  { opacity: 1; }
     #status-badge.ok    { color: var(--gold); }
@@ -286,8 +287,21 @@
     <div>
       <div class="header-sub">2015 WRX · FA20</div>
       <div class="header-title">Tire <span>Tracker</span></div>
+      <div id="status-badge"></div>
     </div>
-    <div id="status-badge"></div>
+    <!-- Subaru star constellation logo — white on WRX blue -->
+    <svg viewBox="0 0 220 130" width="72" height="43" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;opacity:0.92;">
+      <!-- Large star (left) -->
+      <path d="M 72 18 C 68 35 58 48 42 52 C 58 56 68 69 72 86 C 76 69 86 56 102 52 C 86 48 76 35 72 18 Z" fill="white"/>
+      <!-- Horizontal bar connecting large star to cluster -->
+      <path d="M 42 50 L 180 50 C 185 50 188 52 188 55 C 188 58 185 60 180 60 L 42 60 C 37 60 34 58 34 55 C 34 52 37 50 42 50 Z" fill="white"/>
+      <!-- Small star top-right -->
+      <path d="M 158 22 C 155 31 149 38 140 41 C 149 44 155 51 158 60 C 161 51 167 44 176 41 C 167 38 161 31 158 22 Z" fill="white"/>
+      <!-- Small star middle-right -->
+      <path d="M 176 55 C 173 64 167 71 158 74 C 167 77 173 84 176 93 C 179 84 185 77 194 74 C 185 71 179 64 176 55 Z" fill="white"/>
+      <!-- Small star bottom-center -->
+      <path d="M 140 69 C 137 78 131 85 122 88 C 131 91 137 98 140 107 C 143 98 149 91 158 88 C 149 85 143 78 140 69 Z" fill="white"/>
+    </svg>
   </header>
 
   <nav>
