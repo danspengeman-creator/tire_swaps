@@ -126,19 +126,24 @@
       position: relative;
       width: 80px; height: 80px;
     }
-    .tire-spinner {
-      position: absolute; top: 0; left: 0;
-      animation: roll 2s linear infinite;
-      transform-origin: center;
-    }
     .tire-caliper {
       position: absolute; top: 0; left: 0;
-      /* No animation — stays perfectly still */
+      z-index: 1;
       pointer-events: none;
+    }
+    .tire-spinner {
+      position: absolute; top: 0; left: 0;
+      z-index: 2;
+      animation: roll 2s linear infinite;
+      transform-origin: center;
     }
     @keyframes roll {
       from { transform: rotate(0deg); }
       to   { transform: rotate(360deg); }
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(255,255,255,0.9); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+      50%       { border-color: rgba(255,255,255,0.4); box-shadow: 0 0 0 4px rgba(255,255,255,0.0); }
     }
     .label-xs {
       font-size: 12px; letter-spacing: 2px; color: var(--text-dim);
@@ -148,12 +153,23 @@
     /* ── Tire set cards ── */
     .tire-card {
       background: var(--surface); border-radius: 8px; padding: 20px 18px;
-      margin-bottom: 14px; position: relative; border: 1px solid var(--border);
+      margin-bottom: 14px; position: relative; border: 2px solid #444;
+      transition: border-color 0.3s;
     }
+    .tire-card.on-car {
+      border-color: rgba(255,255,255,0.9);
+      animation: pulse-border 2s ease-in-out infinite;
+    }
+    .tire-card.in-storage { border-color: #444; }
     .on-car-badge {
       position: absolute; top: 14px; right: 14px; font-size: 12px;
       letter-spacing: 1.5px; font-weight: 700; background: var(--subaru);
       color: #fff; padding: 4px 10px; border-radius: 4px;
+    }
+    .in-storage-badge {
+      position: absolute; top: 14px; right: 14px; font-size: 12px;
+      letter-spacing: 1.5px; font-weight: 600; background: #2a2a2a;
+      color: #888; padding: 4px 10px; border-radius: 4px; border: 1px solid #444;
     }
     .tire-set-label { font-size: 12px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
     .tire-set-name  { font-size: 15px; color: var(--text-dim); margin-bottom: 18px; font-weight: 500; }
@@ -164,8 +180,7 @@
     .pct-sub   { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 5px; text-align: right; }
     .progress-track { background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-bottom: 12px; }
     .progress-bar   { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-    .tire-status    { font-size: 14px; line-height: 1.5; color: var(--text-dim); }
-    .tire-status.warn { color: var(--danger-dim); font-weight: 600; }
+    .tire-status    { font-size: 14px; line-height: 1.5; }
 
     /* ── Buttons ── */
     .btn-primary {
@@ -551,29 +566,36 @@ function renderDashboard() {
   TIRE_SETS.forEach(ts => {
     const miles     = mileage[ts.id] || 0;
     const pct       = Math.min(miles / ts.treadLife * 100, 100);
-    const warn      = pct > 75;
     const isCurrent = appData.currentSet === ts.id;
     const remaining = ts.treadLife - miles;
+
+    // Traffic light thresholds
+    const statusColor = pct < 50 ? "#2dbe6a"   // green
+                      : pct < 75 ? "#f0c040"   // yellow
+                      :            "#ff5555";   // red
+
     container.innerHTML += `
-      <div class="tire-card" style="border-top:4px solid ${ts.color};${isCurrent ? `border-color:${ts.color};` : ""}">
-        ${isCurrent ? `<div class="on-car-badge" style="color:${ts.color};border:1px solid ${ts.color};">ON CAR</div>` : ""}
+      <div class="tire-card ${isCurrent ? "on-car" : "in-storage"}">
+        ${isCurrent
+          ? `<div class="on-car-badge">ON CAR</div>`
+          : `<div class="in-storage-badge">IN STORAGE</div>`}
         <div class="tire-set-label">${ts.shortName} Set</div>
         <div class="tire-set-name">${ts.name}</div>
         <div class="miles-row">
           <div>
-            <div class="miles-big" style="color:${warn ? "var(--danger)" : "#fff"}">${miles.toLocaleString()}</div>
+            <div class="miles-big">${miles.toLocaleString()}</div>
             <div class="miles-sub">miles accumulated</div>
           </div>
           <div>
-            <div class="pct-big" style="color:${warn ? "var(--danger)" : ts.color}">${Math.round(pct)}%</div>
+            <div class="pct-big" style="color:${statusColor}">${Math.round(pct)}%</div>
             <div class="pct-sub">used</div>
           </div>
         </div>
         <div class="progress-track">
-          <div class="progress-bar" style="width:${pct}%;background:${warn ? "var(--danger)" : ts.color};"></div>
+          <div class="progress-bar" style="width:${pct}%;background:${statusColor};"></div>
         </div>
-        <div class="tire-status${warn ? " warn" : ""}">
-          ${warn
+        <div class="tire-status" style="color:${statusColor}">
+          ${pct >= 75
             ? `⚠ ${remaining.toLocaleString()} mi remaining — inspect tread soon`
             : `${remaining.toLocaleString()} mi remaining of ${ts.treadLife.toLocaleString()} mi limit`}
         </div>
